@@ -12,10 +12,3 @@ struct StepDirPins {
     uint8_t dir = 0;
     uint8_t enable = 0;
 };
-
-struct BoardPins {
-    StepDirPins xl{};
-    StepDirPins yl{};
-    StepDirPins xr{};
-    StepDirPins yr{};
-};
