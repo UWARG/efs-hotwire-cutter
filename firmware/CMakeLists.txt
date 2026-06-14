@@ -28,6 +28,26 @@ set(PICO_BOARD pico CACHE STRING "Board type")
 # Pull in Raspberry Pi Pico SDK (must be before project)
 include(pico_sdk_import.cmake)
 
+set(HOTWIRE_FREERTOS_KERNEL_PATH ${CMAKE_CURRENT_LIST_DIR}/external/FreeRTOS-Kernel)
+
+if(EXISTS "${HOTWIRE_FREERTOS_KERNEL_PATH}")
+    set(FREERTOS_KERNEL_PATH ${HOTWIRE_FREERTOS_KERNEL_PATH})
+elseif(DEFINED ENV{FREERTOS_KERNEL_PATH})
+    set(FREERTOS_KERNEL_PATH $ENV{FREERTOS_KERNEL_PATH})
+endif()
+
+if(FREERTOS_KERNEL_PATH)
+    set(FREERTOS_IMPORT ${FREERTOS_KERNEL_PATH}/portable/ThirdParty/GCC/RP2040/FreeRTOS_Kernel_import.cmake)
+    if(EXISTS "${FREERTOS_IMPORT}")
+        include("${FREERTOS_IMPORT}")
+        set(HOTWIRE_FREERTOS_AVAILABLE 1)
+    else()
+        message(STATUS "FREERTOS_KERNEL_PATH is set, but RP2040 import file was not found: ${FREERTOS_IMPORT}")
+    endif()
+else()
+    message(STATUS "FreeRTOS kernel not found; building without FreeRTOS until the kernel path is configured")
+endif()
+
 project(hotwire_firmware C CXX ASM)
 
 # Initialise the Raspberry Pi Pico SDK
@@ -54,11 +74,19 @@ target_link_libraries(hotwire_firmware
 target_include_directories(hotwire_firmware PRIVATE
         ${CMAKE_CURRENT_LIST_DIR}
         ${CMAKE_CURRENT_LIST_DIR}/src
+        ${CMAKE_CURRENT_LIST_DIR}/freertos
 )
 
 # Add any user requested libraries
 target_link_libraries(hotwire_firmware 
         hardware_timer
         )
+
+if(HOTWIRE_FREERTOS_AVAILABLE)
+    target_link_libraries(hotwire_firmware
+            FreeRTOS-Kernel
+            FreeRTOS-Kernel-Heap4
+            )
+endif()
 
 pico_add_extra_outputs(hotwire_firmware)
