@@ -10,6 +10,9 @@
 #include "FreeRTOS.h"
 #include "task.h"
 
+#include "protocol/Command.hpp"
+#include "protocol/CommandParser.hpp"
+
 namespace {
 
 constexpr size_t kLineBufferLength = (1 << 8); // 2^8 = 256
@@ -29,16 +32,27 @@ void on_stdio_chars_available(void *param)
     portYIELD_FROM_ISR(higher_priority_task_woken); 
 }
 
-void handle_command(const char *line)
+void handle_command(const Command &command)
 {
-    //eventually will add support for CUT4, MOVE4, SET_TEMP and STOP
-    if (strcmp(line, "HELLO") == 0) {
+    switch (command.type) {
+    case CommandType::Hello:
         printf("ACK\n");
         return;
-    }
 
-    if (strcmp(line, "STATUS?") == 0) {
+    case CommandType::Status:
         printf("STATUS STATE=? ZEROED=? BUFFER_FREE=?\n");
+        return;
+
+    case CommandType::SetZero:
+        printf("OK CMD=SET_ZERO\n");
+        return;
+
+    case CommandType::Jog:
+        printf("OK CMD=JOG\n");
+        return;
+
+    case CommandType::Move4:
+        printf("OK CMD=MOVE4\n");
         return;
     }
 
@@ -64,7 +78,14 @@ void handle_received_char(
         }
 
         line_buffer[line_length] = '\0';
-        handle_command(line_buffer);
+
+        Command command;
+        if (CommandParser::parse(line_buffer, &command)) {
+            handle_command(command);
+        } else {
+            printf("INVALID COMMAND\n");
+        }
+
         line_length = 0;
         return;
     }
