@@ -57,6 +57,7 @@ pico_sdk_init()
 
 add_executable(hotwire_firmware
         src/main.cpp
+        src/tasks/SerialTask.cpp
         )
 
 pico_set_program_name(hotwire_firmware "hotwire_firmware")
