@@ -13,11 +13,21 @@ namespace {
 enum class MachineState {
     NeedZero,
     Idle,
+    Running,
 };
 
 const char *state_name(MachineState state)
 {
-    return state == MachineState::NeedZero ? "NEED_ZERO" : "IDLE";
+    switch (state) {
+    case MachineState::NeedZero:
+        return "NEED_ZERO";
+    case MachineState::Idle:
+        return "IDLE";
+    case MachineState::Running:
+        return "RUNNING";
+    }
+
+    return "?";
 }
 
 class MachineController {
@@ -43,6 +53,21 @@ public:
             printf("OK CMD=SET_ZERO\n");
             return;
 
+        case CommandType::RunBegin:
+            state_ = MachineState::Running;
+            printf("OK CMD=RUN_BEGIN\n");
+            return;
+
+        case CommandType::RunEnd:
+            state_ = MachineState::Idle;
+            printf("OK CMD=RUN_END\n");
+            return;
+
+        case CommandType::Stop:
+            state_ = MachineState::Idle;
+            printf("OK CMD=STOP\n");
+            return;
+
         case CommandType::Jog:
         case CommandType::Move4:
             printf("\n");
@@ -59,7 +84,7 @@ private:
     {
         const UBaseType_t used = uxQueueMessagesWaiting(command_queue_);
         const UBaseType_t free = uxQueueSpacesAvailable(command_queue_);
-        const unsigned zeroed = ( (state_ == MachineState::Idle) ? 1U : 0U);
+        const unsigned zeroed = (state_ == MachineState::NeedZero) ? 0U : 1U;
 
         printf(
             "STATUS STATE=%s ZEROED=%u XL=0.000 YL=0.000 XR=0.000 YR=0.000 "

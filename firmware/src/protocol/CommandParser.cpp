@@ -241,6 +241,26 @@ bool CommandParser::parse(const char *line, Command *out)
         return true;
     }
 
+    if (strncmp(line, "RUN_BEGIN", 9) == 0) {
+        const char *cursor = line + 9;
+        if (*cursor != '\0' && *cursor != ' ') {
+            return false;
+        }
+
+        out->type = CommandType::RunBegin;
+        return true;
+    }
+
+    if (strcmp(line, "RUN_END") == 0) {
+        out->type = CommandType::RunEnd;
+        return true;
+    }
+
+    if (strcmp(line, "STOP") == 0) {
+        out->type = CommandType::Stop;
+        return true;
+    }
+
     if (parse_jog(line, out)) {
         return true;
     }

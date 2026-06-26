@@ -15,7 +15,10 @@ enum class CommandType : uint8_t {
     Status,
     Jog,
     SetZero,
-    Move4
+    Move4,
+    RunBegin,
+    RunEnd,
+    Stop,
 };
 
 struct JogCommand {
