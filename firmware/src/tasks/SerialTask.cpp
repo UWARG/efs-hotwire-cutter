@@ -8,6 +8,7 @@
 #include "pico/stdlib.h"
 
 #include "FreeRTOS.h"
+#include "queue.h"
 #include "task.h"
 
 #include "protocol/Command.hpp"
@@ -32,34 +33,8 @@ void on_stdio_chars_available(void *param)
     portYIELD_FROM_ISR(higher_priority_task_woken); 
 }
 
-void handle_command(const Command &command)
-{
-    switch (command.type) {
-    case CommandType::Hello:
-        printf("ACK\n");
-        return;
-
-    case CommandType::Status:
-        printf("STATUS STATE=? ZEROED=? BUFFER_FREE=?\n");
-        return;
-
-    case CommandType::SetZero:
-        printf("OK CMD=SET_ZERO\n");
-        return;
-
-    case CommandType::Jog:
-        printf("OK CMD=JOG\n");
-        return;
-
-    case CommandType::Move4:
-        printf("OK CMD=MOVE4\n");
-        return;
-    }
-
-    printf("INVALID COMMAND\n");
-}
-
 void handle_received_char(
+    QueueHandle_t command_queue,
     int ch,
     char line_buffer[],
     size_t &line_length,
@@ -81,7 +56,9 @@ void handle_received_char(
 
         Command command;
         if (CommandParser::parse(line_buffer, &command)) {
-            handle_command(command);
+            if (xQueueSend(command_queue, &command, 0) != pdTRUE) {
+                printf("ERR CODE=COMMAND_QUEUE_FULL\n");
+            }
         } else {
             printf("INVALID COMMAND\n");
         }
@@ -106,6 +83,7 @@ void handle_received_char(
 }
 
 void drain_available_chars(
+    QueueHandle_t command_queue,
     char line_buffer[],
     size_t &line_length,
     bool &line_overflowed
@@ -113,7 +91,13 @@ void drain_available_chars(
 {
     int ch;
     while ((ch = getchar_timeout_us(0)) != PICO_ERROR_TIMEOUT) {
-        handle_received_char(ch, line_buffer, line_length, line_overflowed);
+        handle_received_char(
+            command_queue,
+            ch,
+            line_buffer,
+            line_length,
+            line_overflowed
+        );
     }
 }
 
@@ -121,7 +105,7 @@ void drain_available_chars(
 
 void serial_task(void *params)
 {
-    (void)params;
+    auto command_queue = static_cast<QueueHandle_t>(params);
 
     char line_buffer[kLineBufferLength] = {};
     size_t line_length = 0;
@@ -132,7 +116,12 @@ void serial_task(void *params)
     printf("READY\n");
 
     while (true) {
-        drain_available_chars(line_buffer, line_length, line_overflowed);
+        drain_available_chars(
+            command_queue,
+            line_buffer,
+            line_length,
+            line_overflowed
+        );
         ulTaskNotifyTake(pdTRUE, portMAX_DELAY);
     }
 }

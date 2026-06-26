@@ -58,6 +58,7 @@ pico_sdk_init()
 add_executable(hotwire_firmware
         src/main.cpp
         src/protocol/CommandParser.cpp
+        src/tasks/MachineTask.cpp
         src/tasks/SerialTask.cpp
         )
 

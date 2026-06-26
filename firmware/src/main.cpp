@@ -1,9 +1,18 @@
 #include "pico/stdlib.h"
 
 #include "FreeRTOS.h"
+#include "queue.h"
 #include "task.h"
 
+#include "protocol/Command.hpp"
+#include "tasks/MachineTask.hpp"
 #include "tasks/SerialTask.hpp"
+
+namespace {
+
+constexpr UBaseType_t kCommandQueueDepth = 16;
+
+} // namespace
 
 extern "C" void vApplicationTickHook(void)
 {
@@ -30,7 +39,26 @@ int main()
 {
     stdio_init_all();
 
-    xTaskCreate(serial_task, "serial", 1024, NULL, tskIDLE_PRIORITY + 1, NULL);
+    QueueHandle_t command_queue =
+        xQueueCreate(kCommandQueueDepth, sizeof(Command));
+    configASSERT(command_queue != nullptr);
+
+    xTaskCreate(
+        machine_task,
+        "machine",
+        1024,
+        command_queue,
+        tskIDLE_PRIORITY + 2,
+        NULL
+    );
+    xTaskCreate(
+        serial_task,
+        "serial",
+        1024,
+        command_queue,
+        tskIDLE_PRIORITY + 1,
+        NULL
+    );
     vTaskStartScheduler();
 
     while (true) {
