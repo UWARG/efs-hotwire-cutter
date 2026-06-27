@@ -16,6 +16,13 @@ enum class MachineState {
     Running,
 };
 
+struct MachinePosition {
+    float xl_mm = 0.0f;
+    float yl_mm = 0.0f;
+    float xr_mm = 0.0f;
+    float yr_mm = 0.0f;
+};
+
 const char *state_name(MachineState state)
 {
     switch (state) {
@@ -28,6 +35,37 @@ const char *state_name(MachineState state)
     }
 
     return "?";
+}
+
+void zero_position(MachinePosition &position)
+{
+    position = {};
+}
+
+void apply_jog(MachinePosition &position, const JogCommand &jog)
+{
+    switch (jog.axis) {
+    case AxisId::XL:
+        position.xl_mm += jog.distance_mm;
+        return;
+    case AxisId::YL:
+        position.yl_mm += jog.distance_mm;
+        return;
+    case AxisId::XR:
+        position.xr_mm += jog.distance_mm;
+        return;
+    case AxisId::YR:
+        position.yr_mm += jog.distance_mm;
+        return;
+    }
+}
+
+void apply_move4(MachinePosition &position, const Move4Command &move4)
+{
+    position.xl_mm = move4.xl_mm;
+    position.yl_mm = move4.yl_mm;
+    position.xr_mm = move4.xr_mm;
+    position.yr_mm = move4.yr_mm;
 }
 
 class MachineController {
@@ -49,6 +87,7 @@ public:
             return;
 
         case CommandType::SetZero:
+            zero_position(position_);
             state_ = MachineState::Idle;
             printf("OK CMD=SET_ZERO\n");
             return;
@@ -69,8 +108,13 @@ public:
             return;
 
         case CommandType::Jog:
+            apply_jog(position_, command.data.jog);
+            printf("OK CMD=JOG\n");
+            return;
+
         case CommandType::Move4:
-            printf("\n");
+            apply_move4(position_, command.data.move4);
+            printf("OK CMD=MOVE4\n");
             return;
 
         case CommandType::Invalid:
@@ -87,10 +131,14 @@ private:
         const unsigned zeroed = (state_ == MachineState::NeedZero) ? 0U : 1U;
 
         printf(
-            "STATUS STATE=%s ZEROED=%u XL=0.000 YL=0.000 XR=0.000 YR=0.000 "
+            "STATUS STATE=%s ZEROED=%u XL=%.3f YL=%.3f XR=%.3f YR=%.3f "
             "BUFFER_FREE=%u BUFFER_USED=%u\n",
             state_name(state_),
             zeroed,
+            static_cast<double>(position_.xl_mm),
+            static_cast<double>(position_.yl_mm),
+            static_cast<double>(position_.xr_mm),
+            static_cast<double>(position_.yr_mm),
             static_cast<unsigned>(free),
             static_cast<unsigned>(used)
         );
@@ -98,6 +146,7 @@ private:
 
     QueueHandle_t command_queue_;
     MachineState state_ = MachineState::NeedZero;
+    MachinePosition position_;
 };
 
 } // namespace
