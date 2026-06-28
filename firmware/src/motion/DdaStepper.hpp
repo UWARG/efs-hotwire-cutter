@@ -5,7 +5,7 @@
 class DdaStepper {
 public:
     void start(const MotionSegment& segment);
-    AxesToStep nextTick();
+    AxisMask nextTick();
     bool done() const;
 
 private:

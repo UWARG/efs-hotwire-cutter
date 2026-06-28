@@ -14,6 +14,6 @@ public:
     void init();
     void enableAll();
     void disableAll();
-    void setDirections(bool xlPositive, bool ylPositive, bool xrPositive, bool yrPositive);
-    void pulse(AxesToStep axes);
+    void setDirections(AxisMask directionPositive);
+    void pulse(AxisMask axesToStep);
 };

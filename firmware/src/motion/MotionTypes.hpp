@@ -2,18 +2,23 @@
 
 #include <cstdint>
 
-struct MotionSegment {
-    int32_t xlSteps = 0;
-    int32_t ylSteps = 0;
-    int32_t xrSteps = 0;
-    int32_t yrSteps = 0;
-
-    uint32_t tickCount = 0;
+struct AxisStepCounts {
+    uint32_t xl = 0;
+    uint32_t yl = 0;
+    uint32_t xr = 0;
+    uint32_t yr = 0;
 };
 
-struct AxesToStep {
+struct AxisMask {
     bool xl = false;
     bool yl = false;
     bool xr = false;
     bool yr = false;
+};
+
+struct MotionSegment {
+    AxisStepCounts steps{};
+    AxisMask directionPositive{};
+    uint32_t dominantSteps = 0;
+    uint32_t tickIntervalUs = 0;
 };
