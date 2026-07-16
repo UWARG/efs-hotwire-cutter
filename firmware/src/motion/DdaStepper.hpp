@@ -9,6 +9,8 @@ public:
     bool done() const;
 
 private:
-    MotionSegment segment{};
+    AxisStepCounts direction = {};
+    AxisStepCounts errorFactor = {};
     uint32_t tickIndex = 0;
+    uint32_t expectedSteps = 0;
 };
