@@ -10,7 +10,13 @@ public:
 
 private:
     AxisStepCounts direction = {};
-    AxisStepCounts errorFactor = {};
+
+    // error terms
+    int32_t exl = 0;
+    int32_t exr = 0;
+    int32_t eyl = 0;
+    int32_t eyr = 0;
+
     uint32_t tickIndex = 0;
     uint32_t expectedSteps = 0;
 };
