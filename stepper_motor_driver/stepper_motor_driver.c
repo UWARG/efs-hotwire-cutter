@@ -100,6 +100,11 @@ void move_X(float distance_mm){
     }
 }
 
+bool isMotorBlocked()
+{
+    return readTMCRegister(X_UART_ADDR, SG_RESULT) <= SG_RESULT_THRESHOLD;
+}
+
 int main()
 {
     stdio_init_all();
@@ -144,9 +149,14 @@ int main()
     // Stop completely for 1.5 seconds before repeating
     sleep_ms(1500);
 
+    // test the driving of the pin
+    gpio_put(X_DIR_PIN, false);
     while (true)
     {
         printf("SG_RESULT: %d\n", readTMCRegister(X_UART_ADDR, SG_RESULT));
-        sleep_ms(1000);
+        gpio_put(X_STEP_PIN, true);
+        sleep_us(2);
+        gpio_put(X_STEP_PIN, false);
+        sleep_us(FIXED_SPEED_DELAY_US);
     }
 }
