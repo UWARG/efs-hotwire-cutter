@@ -8,15 +8,15 @@
 
 // Pins can be changed, see the GPIO function select table in the datasheet for information on GPIO assignments
 // --- X-Axis Pin Definitions (SKR Pico Layout) ---
-#define X_STEP_PIN      6
-#define X_DIR_PIN       5
-#define X_ENABLE_PIN    7
+#define X_STEP_PIN      11
+#define X_DIR_PIN       10
+#define X_ENABLE_PIN    12
 #define X_UART_ADDR  0
 
 // --- Y-Axis Pin Definitions (SKR Pico Layout) ---
-#define Y_STEP_PIN      14
-#define Y_DIR_PIN       13
-#define Y_ENABLE_PIN    15
+#define Y_STEP_PIN      6
+#define Y_DIR_PIN       5
+#define Y_ENABLE_PIN    7
 #define Y_UART_ADDR     1  // Y-axis is Node Address 1 on the shared UART bus
     
 #define UART_TX_PIN 8
