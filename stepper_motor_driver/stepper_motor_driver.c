@@ -55,22 +55,26 @@ uint8_t calculateCRC(uint8_t* datagram, uint8_t len) {
 }
 
 uint32_t readTMCRegister(uint8_t target_address, uint8_t reg) {
-    uint8_t packet[4];
+    uint8_t packet[12]; // request is first 4 bytes, response is next 8. request and response share the same buffer because the request will echo on readback which the request portion of the packet will absorb
+    uint8_t read[8];
     uint32_t result = 0;
 
     packet[0] = 0x05;         // Sync bits
     packet[1] = target_address;         // X-axis node address
-    packet[2] = reg | 0x80;   // Add write flag bit
-    packet[3] = calculateCRC(packet, 4);
+    packet[2] = reg & 0x80;   // Make write flag low
+    packet[3] = calculateCRC(packet, 3);
     
-    uart_write_blocking(VM_UART, packet, sizeof(packet)); // send read request
-    uart_read_blocking(VM_UART, (uint8_t*)(&result), sizeof(result));
+    uart_write_blocking(VM_UART, packet, 4); // send read request
+    uart_read_blocking(VM_UART, packet, sizeof(packet)); // read stuff back
+
+    result = (packet[10] << 24) | (packet[9] << 16) | (packet[8] << 8) | packet[7];
+    
     return result;
 }
 
 void writeTMCRegister(uint8_t target_address, uint8_t reg, uint32_t data)
 {
-    uint8_t packet[4];
+    uint8_t packet[8];
     packet[0] = 0x05;         // Sync bits
     packet[1] = target_address;         // X-axis node address
     packet[2] = reg | 0x80;   // Add write flag bit
@@ -150,7 +154,7 @@ int main()
     sleep_ms(1500);
 
     // test the driving of the pin
-    gpio_put(X_DIR_PIN, false);
+    gpio_put(X_DIR_PIN, true);
     while (true)
     {
         printf("SG_RESULT: %d\n", readTMCRegister(X_UART_ADDR, SG_RESULT));
