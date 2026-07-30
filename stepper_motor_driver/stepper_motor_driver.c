@@ -55,20 +55,23 @@ uint8_t calculateCRC(uint8_t* datagram, uint8_t len) {
 }
 
 uint32_t readTMCRegister(uint8_t target_address, uint8_t reg) {
-    uint8_t packet[12]; // request is first 4 bytes, response is next 8. request and response share the same buffer because the request will echo on readback which the request portion of the packet will absorb
+    // request is first 4 bytes, response is final 8. request and response share the same buffer because the request will echo on readback which the request portion of the packet will absorb
+    // btw the tmc2209 waits for 8 bits before sending response datagram for some reason idk so that's why the payload buffer is 13 bytes long not 12 bytes long
+    uint8_t packet[13];
     uint8_t read[8];
     uint32_t result = 0;
 
     packet[0] = 0x05;         // Sync bits
     packet[1] = target_address;         // X-axis node address
-    packet[2] = reg & 0x80;   // Make write flag low
+    packet[2] = reg & 0x7F;   // Make write flag low
     packet[3] = calculateCRC(packet, 3);
     
     uart_write_blocking(VM_UART, packet, 4); // send read request
-    uart_read_blocking(VM_UART, packet, sizeof(packet)); // read stuff back
+    uart_read_blocking(VM_UART, packet, sizeof(packet) - 1); // read stuff back
 
-    result = (packet[10] << 24) | (packet[9] << 16) | (packet[8] << 8) | packet[7];
+    result = (packet[8] << 24) | (packet[9] << 16) | (packet[10] << 8) | packet[11];
     
+    printf("Response packet dump: %02x %02x %02x %02x\n", packet[5], packet[6], packet[7], packet[8]);
     return result;
 }
 
@@ -85,6 +88,8 @@ void writeTMCRegister(uint8_t target_address, uint8_t reg, uint32_t data)
     packet[6] = data & 0xFF;
     
     packet[7] = calculateCRC(packet, 7);
+    uart_write_blocking(VM_UART, packet, sizeof(packet));
+    uart_read_blocking(VM_UART, packet, sizeof(packet));
 }
 
 
@@ -155,11 +160,12 @@ int main()
 
     // test the driving of the pin
     gpio_put(X_DIR_PIN, true);
+    printf("IOIN: 0x%x\n", readTMCRegister(X_UART_ADDR, 0x06));
     while (true)
     {
-        printf("SG_RESULT: %d\n", readTMCRegister(X_UART_ADDR, SG_RESULT));
+        printf("SG_RESULT: %d\n", readTMCRegister(X_UART_ADDR, SG_RESULT) & 511);
         gpio_put(X_STEP_PIN, true);
-        sleep_us(2);
+        sleep_us(10);
         gpio_put(X_STEP_PIN, false);
         sleep_us(FIXED_SPEED_DELAY_US);
     }
