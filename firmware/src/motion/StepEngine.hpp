@@ -16,6 +16,7 @@ public:
     void init();
     bool start(const MotionSegment& segment);
     void stop();
+    void tick();
     StepEngineState state() const;
 
 private:
