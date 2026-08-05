@@ -27,9 +27,8 @@
 #define MICROSTEPS          8
 #define STEPS_PER_REV       (MOTOR_STEPS_PER_REV * MICROSTEPS) // 3200 steps
 
-#define SGTHRS_VALUE 128 // idk what this does for SGTHRS we're just going to use the middle value for now because that seems the most correct XD
-#define SG_RESULT_THRESHOLD 67 // any SG_RESULT value lower than this will be considered a stall
-
+#define SG_RESULT_THRESHOLD 40 // any SG_RESULT value lower than this will be considered a stalling position
+#define SG_STALL_DEBOUNCE 40 // SG_RESULT oscillates between not stalled and stalled by default when the motor is running normally, therefore it needs this amount of stall reads in a row before we can say something has gone wrong
 #define SGTHRS 0x40 // address of the stall guard threshold register, higher = more sensitive detection of stalling, min 0 max 255
 #define SG_RESULT 0x41 // StallGuard4 generates a value, goes from 0 to 510 with 0 being highest load and 510 being lowest load
 
@@ -71,7 +70,6 @@ uint32_t readTMCRegister(uint8_t target_address, uint8_t reg) {
 
     result = (packet[8] << 24) | (packet[9] << 16) | (packet[10] << 8) | packet[11];
     
-    printf("Response packet dump: %02x %02x %02x %02x\n", packet[5], packet[6], packet[7], packet[8]);
     return result;
 }
 
@@ -141,7 +139,6 @@ int main()
     // 4. Send safety configuration registers to the X-Axis Driver (Node Address 0)
     writeTMCRegister(X_UART_ADDR, 0x10, 0x00001F10); // Sets conservative, safe operating currents
     writeTMCRegister(X_UART_ADDR, 0x6C, 0x04000053); // Configures smooth 16 microsteps (dedge = 0)
-    writeTMCRegister(X_UART_ADDR, SGTHRS, SGTHRS_VALUE);
 
     sleep_ms(1000); // Wait 1 second before beginning test routine
     // 5. Main Test Loop
@@ -161,11 +158,25 @@ int main()
     // test the driving of the pin
     gpio_put(X_DIR_PIN, true);
     printf("IOIN: 0x%x\n", readTMCRegister(X_UART_ADDR, 0x06));
+    uint32_t stallCount = 0;
     while (true)
     {
-        printf("SG_RESULT: %d\n", readTMCRegister(X_UART_ADDR, SG_RESULT) & 511);
+        uint32_t result = readTMCRegister(X_UART_ADDR, SG_RESULT) & 511;
+        printf("SG_RESULT: %d\n", result);
+        if (result <= SG_RESULT_THRESHOLD)
+        {
+            stallCount++;
+            if (stallCount > SG_STALL_DEBOUNCE)
+            {
+                break;
+            }
+        }
+        else
+        {
+            stallCount = 0;
+        }
         gpio_put(X_STEP_PIN, true);
-        sleep_us(10);
+        sleep_us(2);
         gpio_put(X_STEP_PIN, false);
         sleep_us(FIXED_SPEED_DELAY_US);
     }
