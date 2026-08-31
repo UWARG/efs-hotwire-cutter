@@ -1,0 +1,38 @@
+[project]
+name = "hotwire-desktop"
+version = "0.1.0"
+description = "Desktop workstation app for the EFS 4-axis hotwire foam cutter"
+requires-python = ">=3.11"
+dependencies = [
+    "PySide6>=6.7",
+    "pyserial>=3.5",
+    "numpy>=1.26",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=8.0",
+]
+
+[project.scripts]
+hotwire-desktop = "hotwire_desktop.app:run"
+
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools]
+packages = [
+    "hotwire_core",
+    "hotwire_core.geometry",
+    "hotwire_core.io",
+    "hotwire_core.toolpath",
+    "hotwire_core.simulation",
+    "hotwire_protocol",
+    "hotwire_desktop",
+    "hotwire_desktop.ui",
+    "hotwire_desktop.services",
+]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]

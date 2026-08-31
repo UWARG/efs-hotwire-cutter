@@ -1,0 +1,36 @@
+# Machine configuration but all placeholder values
+
+[machine]
+name = "EFS hotwire v1"
+# Distance between the left and right gantry planes, in mm.
+# Required for foam-to-gantry projection. TODO: measure.
+gantry_spacing_mm = 800.0
+
+[travel]
+# Usable axis travel, in mm. TODO: measure.
+x_min_mm = 0.0
+x_max_mm = 700.0
+y_min_mm = 0.0
+y_max_mm = 300.0
+
+[axes.xl]
+# TODO: compute from hardware.
+steps_per_mm = 80.0
+direction_inverted = false
+
+[axes.yl]
+steps_per_mm = 80.0
+direction_inverted = false
+
+[axes.xr]
+steps_per_mm = 80.0
+direction_inverted = false
+
+[axes.yr]
+steps_per_mm = 80.0
+direction_inverted = false
+
+[limits]
+max_feedrate_mm_min = 600.0
+max_jog_feedrate_mm_min = 400.0
+
