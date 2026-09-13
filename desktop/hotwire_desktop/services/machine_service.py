@@ -37,7 +37,24 @@ class MachineService(QObject):
     # -- job control ---------------------------------------------------------
 
     def run_job(self, toolpath) -> None:
-        self.message.emit("Job streaming not done")
+        if toolpath is None or not toolpath.moves:
+            self.message.emit("No toolpath")
+            return
+
+        total = len(toolpath.moves)
+        self._send(cmd.RunBegin())
+        for sent, move in enumerate(toolpath.moves, 1):
+            self._send(
+                cmd.Move4(
+                    xl_mm=move.xl,
+                    yl_mm=move.yl,
+                    xr_mm=move.xr,
+                    yr_mm=move.yr,
+                    feedrate_mm_min=move.feedrate_mm_min,
+                )
+            )
+            self.job_progress.emit(sent, total)
+        self._send(cmd.RunEnd())
 
     def stop_job(self) -> None:
         self._send(cmd.Stop())
