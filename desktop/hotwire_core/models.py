@@ -1,6 +1,3 @@
-"""Core data model shared across geometry, toolpath, and simulation.
-"""
-
 from __future__ import annotations
 
 from dataclasses import dataclass, field

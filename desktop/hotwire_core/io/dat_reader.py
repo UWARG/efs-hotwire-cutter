@@ -1,5 +1,3 @@
-"""Selig/Lednicer .dat airfoil file reading."""
-
 from __future__ import annotations
 
 from pathlib import Path
@@ -22,11 +20,6 @@ def _parse_pair(line: str) -> tuple[float, float] | None:
 
 
 def load_dat(path: Path | str) -> Airfoil:
-    """Load an airfoil from a .dat file.
-
-    Accepts Selig (single loop TE->TE) and Lednicer (two surfaces LE->TE)
-    ordering. always returns Selig-style. Airfoil.name comes from the header line.
-    """
     path = Path(path)
     lines = [line.strip() for line in path.read_text().splitlines()]
     lines = [line for line in lines if line]

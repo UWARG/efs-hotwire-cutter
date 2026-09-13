@@ -9,14 +9,6 @@ dependencies = [
     "numpy>=1.26",
 ]
 
-[project.optional-dependencies]
-dev = [
-    "pytest>=8.0",
-]
-
-[project.scripts]
-hotwire-desktop = "hotwire_desktop.app:run"
-
 [build-system]
 requires = ["setuptools>=68"]
 build-backend = "setuptools.build_meta"
@@ -33,6 +25,3 @@ packages = [
     "hotwire_desktop.ui",
     "hotwire_desktop.services",
 ]
-
-[tool.pytest.ini_options]
-testpaths = ["tests"]

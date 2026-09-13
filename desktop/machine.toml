@@ -16,19 +16,15 @@ y_max_mm = 300.0
 [axes.xl]
 # TODO: compute from hardware.
 steps_per_mm = 80.0
-direction_inverted = false
 
 [axes.yl]
 steps_per_mm = 80.0
-direction_inverted = false
 
 [axes.xr]
 steps_per_mm = 80.0
-direction_inverted = false
 
 [axes.yr]
 steps_per_mm = 80.0
-direction_inverted = false
 
 [limits]
 max_feedrate_mm_min = 600.0

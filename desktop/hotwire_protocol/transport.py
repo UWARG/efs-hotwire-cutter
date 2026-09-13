@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
-from hotwire_protocol import DEFAULT_BAUD
+DEFAULT_BAUD = 115200
 
 
 @dataclass(frozen=True)

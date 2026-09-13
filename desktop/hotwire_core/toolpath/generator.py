@@ -10,5 +10,4 @@ class ToolpathError(ValueError):
 
 
 def generate_toolpath(job: JobSettings) -> Toolpath:
-    """Generate the cut path for a job"""
     raise NotImplementedError

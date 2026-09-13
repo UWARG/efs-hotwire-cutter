@@ -9,10 +9,6 @@ from hotwire_core.models import JobSettings, Point2D, Toolpath
 
 @dataclass(frozen=True)
 class PreviewPolyline:
-    """drawable polyline with semantic meaning embedded in colour or design
-    ex red for an error or warning
-    ."""
-
     role: str
     # root_profile, tip_profile, cut_path_root, cut_path_tip, foam_outline, lead, warning
     points: list[Point2D]
@@ -27,10 +23,4 @@ class PreviewData:
 
 
 def build_preview(job: JobSettings, toolpath: Toolpath | None) -> PreviewData:
-    """Build drawable preview state.
-    this can work with profile alone and no toolpth and just produce profile polylines
-    toolpath warnings should get copied through and probably highlight those lines
-    """
-
-
     raise NotImplementedError

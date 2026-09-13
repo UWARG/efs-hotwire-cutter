@@ -1,5 +1,3 @@
-"""MainWindow: docks the panels around the preview canvas and wires signals."""
-
 from __future__ import annotations
 
 from PySide6.QtCore import Qt
