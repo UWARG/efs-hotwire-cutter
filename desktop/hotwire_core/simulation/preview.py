@@ -23,4 +23,17 @@ class PreviewData:
 
 
 def build_preview(job: JobSettings, toolpath: Toolpath | None) -> PreviewData:
-    raise NotImplementedError
+    if toolpath is None or not toolpath.moves:
+        return PreviewData()
+
+    root = [Point2D(move.xl, move.yl) for move in toolpath.moves]
+    tip = [Point2D(move.xr, move.yr) for move in toolpath.moves]
+    return PreviewData(
+        polylines=[
+            PreviewPolyline("cut_path_root", root),
+            PreviewPolyline("cut_path_tip", tip),
+        ],
+        wire_start_root=root[0],
+        wire_start_tip=tip[0],
+        warnings=list(toolpath.warnings),
+    )
