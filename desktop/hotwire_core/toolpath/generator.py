@@ -7,7 +7,7 @@ from hotwire_core.geometry.airfoil import (
     resample_airfoil,
     scale_and_place,
 )
-from hotwire_core.models import Airfoil, JobSettings, Segment4, Toolpath
+from hotwire_core.models import Airfoil, CutDirection, JobSettings, Segment4, Toolpath
 
 
 class ToolpathError(ValueError):
@@ -59,4 +59,6 @@ def generate_toolpath(job: JobSettings) -> Toolpath:
         )
         for root_point, tip_point in zip(root.points, tip.points)
     ]
+    if cut.direction is CutDirection.BOTTOM_FIRST:
+        moves.reverse()
     return Toolpath(moves=moves)
