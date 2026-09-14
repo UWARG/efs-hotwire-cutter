@@ -1,19 +1,27 @@
 from __future__ import annotations
 
+import math
+
 from hotwire_core.geometry.airfoil import (
     normalize_airfoil,
     resample_airfoil,
     scale_and_place,
 )
-from hotwire_core.models import JobSettings, Segment4, Toolpath
+from hotwire_core.models import Airfoil, JobSettings, Segment4, Toolpath
 
 
 class ToolpathError(ValueError):
     """no path"""
 
 
-# TODO: direction, interpolation, leads, kerf, alignment, projection, limits,
-# foam placement
+def arc_length(airfoil: Airfoil) -> float:
+    return sum(
+        math.hypot(end.x - start.x, end.y - start.y)
+        for start, end in zip(airfoil.points, airfoil.points[1:])
+    )
+
+
+# TODO: direction, leads, kerf, alignment, projection, limits, foam placement
 def generate_toolpath(job: JobSettings) -> Toolpath:
     if job.wing is None or job.cut is None:
         raise ToolpathError("fill in the settings brah")
@@ -22,7 +30,18 @@ def generate_toolpath(job: JobSettings) -> Toolpath:
     cut = job.cut
     root = normalize_airfoil(wing.root)
     tip = normalize_airfoil(wing.tip)
-    point_count = min(len(root.points), len(tip.points))
+    # add samples until the meets the req spacing.
+    point_count = max(
+        min(len(root.points), len(tip.points)),
+        math.ceil(
+            max(
+                arc_length(root) * wing.root_chord_mm,
+                arc_length(tip) * wing.tip_chord_mm,
+            )
+            / cut.interpolation_mm
+        )
+        + 1,
+    )
     root = scale_and_place(resample_airfoil(root, point_count), wing.root_chord_mm, 0.0)
     tip = scale_and_place(
         resample_airfoil(tip, point_count), wing.tip_chord_mm, wing.sweep_mm
