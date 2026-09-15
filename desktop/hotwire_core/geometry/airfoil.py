@@ -88,6 +88,59 @@ def scale_and_place(
     )
 
 
+def offset_airfoil(airfoil: Airfoil, kerf_mm: float) -> Airfoil:
+    # Offset a profile by half the total wire width using local normals
+
+    _validate_points(airfoil)
+    if not math.isfinite(kerf_mm) or kerf_mm < 0.0:
+        raise ValueError("check kerf value")
+    if kerf_mm == 0.0:
+        return Airfoil(name=airfoil.name, points=list(airfoil.points))
+
+    signed_area = _signed_area(airfoil.points)
+    if signed_area == 0.0:
+        raise ValueError("can determine point ordering")
+
+    # CCW profiles have their interior on the left, 
+    # thus outward normal is right hand normal
+    #you can flip for the CW profiles
+    outward_sign = 1.0 if signed_area > 0.0 else -1.0
+    distance = kerf_mm / 2.0
+    offset_points: list[Point2D] = []
+    last_index = len(airfoil.points) - 1
+    for index, point in enumerate(airfoil.points):
+        if index == 0:
+            previous, following = point, airfoil.points[1]
+        elif index == last_index:
+            previous, following = airfoil.points[-2], point
+        else:
+            previous, following = airfoil.points[index - 1], airfoil.points[index + 1]
+
+        tangent_x = following.x - previous.x
+        tangent_y = following.y - previous.y
+        tangent_length = math.hypot(tangent_x, tangent_y)
+        
+
+        normal_x = outward_sign * tangent_y / tangent_length
+        normal_y = -outward_sign * tangent_x / tangent_length
+        offset_points.append(
+            Point2D(
+                point.x + distance * normal_x,
+                point.y + distance * normal_y,
+            )
+        )
+
+    return Airfoil(name=airfoil.name, points=offset_points)
+
+
+#shoelace theoreom (ball knowledge)
+def _signed_area(points: list[Point2D]) -> float:
+    return 0.5 * sum(
+        point.x * following.y - following.x * point.y
+        for point, following in zip(points, points[1:] + points[:1])
+    )
+
+
 def _validate_points(airfoil: Airfoil) -> None:
     if len(airfoil.points) < 2:
         raise ValueError(">= two points")

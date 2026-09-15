@@ -4,6 +4,7 @@ import math
 
 from hotwire_core.geometry.airfoil import (
     normalize_airfoil,
+    offset_airfoil,
     resample_airfoil,
     scale_and_place,
 )
@@ -21,7 +22,7 @@ def arc_length(airfoil: Airfoil) -> float:
     )
 
 
-# TODO: direction, leads, kerf, alignment, projection, limits, foam placement
+# TODO: leads, alignment, projection, limits, foam placement
 def generate_toolpath(job: JobSettings) -> Toolpath:
     if job.wing is None or job.cut is None:
         raise ToolpathError("fill in the settings brah")
@@ -46,6 +47,11 @@ def generate_toolpath(job: JobSettings) -> Toolpath:
     tip = scale_and_place(
         resample_airfoil(tip, point_count), wing.tip_chord_mm, wing.sweep_mm
     )
+    try:
+        root = offset_airfoil(root, cut.kerf_mm)
+        tip = offset_airfoil(tip, cut.kerf_mm)
+    except ValueError as exc:
+        raise ToolpathError(f"cannot apply kerf offset: {exc}") from exc
 
     #generate the actual moves
     moves = [
