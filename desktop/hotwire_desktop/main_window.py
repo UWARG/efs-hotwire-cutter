@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from PySide6.QtCore import Qt
-from PySide6.QtWidgets import QDockWidget, QMainWindow, QTabWidget
+from PySide6.QtWidgets import QDockWidget, QLabel, QMainWindow, QPushButton, QTabWidget, QToolBar
 
 from hotwire_desktop.services.job_service import JobService
 from hotwire_desktop.services.machine_service import MachineService
@@ -31,6 +31,28 @@ class MainWindow(QMainWindow):
         self.preview_canvas = PreviewCanvas(self)
         self.setCentralWidget(self.preview_canvas)
         self.preview_service.preview_ready.connect(self.preview_canvas.show_preview)
+        self.preview_service.preview_fit_requested.connect(self.preview_canvas.fit_geometry)
+        self.job_service.project_changed.connect(self._sync_preview_machine_limits)
+        self.preview_canvas.set_machine_limits(self.job_service.job.limits)
+
+        preview_toolbar = QToolBar("Preview", self)
+        preview_toolbar.setMovable(False)
+        for label, handler in (
+            ("Fit Geometry", self.preview_canvas.fit_geometry),
+            ("Fit Machine", self.preview_canvas.fit_machine),
+            ("Reset View", self.preview_canvas.reset_view),
+        ):
+            button = QPushButton(label, preview_toolbar)
+            button.clicked.connect(handler)
+            preview_toolbar.addWidget(button)
+        preview_toolbar.addSeparator()
+        legend = QLabel(
+            '<span style="color:#29b6f6">● Root</span>&nbsp;&nbsp;'
+            '<span style="color:#66bb6a">● Tip</span>',
+            preview_toolbar,
+        )
+        preview_toolbar.addWidget(legend)
+        self.addToolBar(Qt.ToolBarArea.TopToolBarArea, preview_toolbar)
 
         # Left dock: setup panels as tabs
         setup_tabs = QTabWidget()
@@ -68,3 +90,6 @@ class MainWindow(QMainWindow):
     def _show_error(self, message: str) -> None:
         self.statusBar().showMessage(message, 8000)
         self.status_panel.append_message(message)
+
+    def _sync_preview_machine_limits(self) -> None:
+        self.preview_canvas.set_machine_limits(self.job_service.job.limits)

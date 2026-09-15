@@ -35,6 +35,10 @@ class JobService(QObject):
         self.span_mm: float = 400.0
         self.sweep_mm: float = 0.0
 
+        examples = Path(__file__).resolve().parents[2] / "examples" / "airfoils"
+        self.import_airfoil("root", examples / "naca2412.dat")
+        self.import_airfoil("tip", examples / "n0012.dat")
+
     def new_project(self) -> None:
         self.job = JobSettings()
         self.root_airfoil = None

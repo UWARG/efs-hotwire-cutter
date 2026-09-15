@@ -63,5 +63,11 @@ class ProjectPanel(QWidget):
     def _refresh(self) -> None:
         if self._job.root_airfoil is None:
             self._root_label.setText("Root: —")
+        else:
+            airfoil = self._job.root_airfoil
+            self._root_label.setText(f"Root: {airfoil.name} ({len(airfoil.points)} pts)")
         if self._job.tip_airfoil is None:
             self._tip_label.setText("Tip: —")
+        else:
+            airfoil = self._job.tip_airfoil
+            self._tip_label.setText(f"Tip: {airfoil.name} ({len(airfoil.points)} pts)")
