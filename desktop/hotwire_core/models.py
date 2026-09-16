@@ -24,11 +24,6 @@ class AlignmentMode(Enum):
     TRAILING_EDGE = "trailing_edge" # back edge
 
 
-class CutDirection(Enum):
-    TOP_FIRST = "top_first" #start at top and cut down
-    BOTTOM_FIRST = "bottom_first" #start at bottom and cut up
-
-
 #im tryna think of the best way to do this i think its better
 #to store gaps from left side and right side
 @dataclass(frozen=True)
@@ -65,8 +60,6 @@ class CutSettings:
     leadin_mm: float = 0.0
     leadout_mm: float = 0.0
     interpolation_mm: float = 1.0
-    segment_tolerance_mm: float = 0.05
-    direction: CutDirection = CutDirection.TOP_FIRST
 
 
 @dataclass

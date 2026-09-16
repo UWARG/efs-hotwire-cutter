@@ -3,7 +3,7 @@ from __future__ import annotations
 from math import ceil, floor
 
 from PySide6.QtCore import QPointF, QRectF, Qt
-from PySide6.QtGui import QColor, QPainter, QPen, QPolygonF
+from PySide6.QtGui import QColor, QPainter, QPainterPath, QPen
 from PySide6.QtWidgets import QGraphicsScene, QGraphicsView, QWidget
 
 from hotwire_core.models import MachineLimits
@@ -36,6 +36,9 @@ class PreviewCanvas(QGraphicsView):
         # Machine Y grows up; Qt scene Y grows down.
         self.scale(1.0, -1.0)
         self._preview = PreviewData()
+        self._visible = {"root": True, "tip": True}
+        self._path_items = {"root": [], "tip": []}
+        self._start_markers = {"root": [], "tip": []}
         self._machine_rect = QRectF(
             -_GRID_EXTENT_MM,
             -_GRID_EXTENT_MM,
@@ -66,20 +69,48 @@ class PreviewCanvas(QGraphicsView):
         self._preview = data
         self._scene.clear()
         self._draw_grid()
+        self._path_items = {"root": [], "tip": []}
+        self._start_markers = {"root": [], "tip": []}
         for polyline in data.polylines:
             if len(polyline.points) < 2:
                 continue
             color, width, style = _ROLE_PENS.get(polyline.role, _DEFAULT_PEN)
             pen = QPen(color, width, style)
             pen.setCosmetic(True)
-            polygon = QPolygonF([QPointF(p.x, p.y) for p in polyline.points])
-            path_item = self._scene.addPolygon(polygon)
+            path = QPainterPath()
+            path.moveTo(polyline.points[0].x, polyline.points[0].y)
+            for point in polyline.points[1:]:
+                path.lineTo(point.x, point.y)
+            path_item = self._scene.addPath(path, pen)
             path_item.setPen(pen)
-        for start in (data.wire_start_root, data.wire_start_tip):
+            side = (
+                "root"
+                if polyline.role.endswith("_root")
+                else "tip"
+                if polyline.role.endswith("_tip")
+                else None
+            )
+            if side is not None:
+                self._path_items[side].append(path_item)
+                path_item.setVisible(self._visible[side])
+        for side, start in (
+            ("root", data.wire_start_root),
+            ("tip", data.wire_start_tip),
+        ):
             if start is not None:
                 marker_pen = QPen(QColor("#ffee58"), 0.0)
                 marker_pen.setCosmetic(True)
-                self._scene.addEllipse(start.x - 2, start.y - 2, 4, 4, marker_pen)
+                marker = self._scene.addEllipse(
+                    start.x - 2, start.y - 2, 4, 4, marker_pen
+                )
+                self._start_markers[side].append(marker)
+                marker.setVisible(self._visible[side])
+
+    def set_root_visible(self, visible: bool) -> None:
+        self._set_visible("root", visible)
+
+    def set_tip_visible(self, visible: bool) -> None:
+        self._set_visible("tip", visible)
 
     def fit_geometry(self) -> None:
         bounds = self._geometry_bounds()
@@ -143,18 +174,22 @@ class PreviewCanvas(QGraphicsView):
 
     # painting helpers
 
+    def _set_visible(self, side: str, visible: bool) -> None:
+        self._visible[side] = visible
+        for item in self._path_items[side] + self._start_markers[side]:
+            item.setVisible(visible)
+
     def _geometry_bounds(self) -> QRectF | None:
-        bounds = QRectF()
-        has_points = False
-        for polyline in self._preview.polylines:
-            if not polyline.points:
-                continue
-            polyline_bounds = QPolygonF(
-                [QPointF(point.x, point.y) for point in polyline.points]
-            ).boundingRect()
-            bounds = polyline_bounds if not has_points else bounds.united(polyline_bounds)
-            has_points = True
-        return bounds if has_points else None
+        points = [
+            point for polyline in self._preview.polylines for point in polyline.points
+        ]
+        if not points:
+            return None
+        min_x = min(point.x for point in points)
+        max_x = max(point.x for point in points)
+        min_y = min(point.y for point in points)
+        max_y = max(point.y for point in points)
+        return QRectF(min_x, min_y, max_x - min_x, max_y - min_y)
 
     def _draw_grid(self) -> None:
         minor_pen = QPen(QColor("#2c2c2c"), 0.0)

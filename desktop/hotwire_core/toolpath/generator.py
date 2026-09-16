@@ -8,7 +8,7 @@ from hotwire_core.geometry.airfoil import (
     resample_airfoil,
     scale_and_place,
 )
-from hotwire_core.models import Airfoil, CutDirection, JobSettings, Segment4, Toolpath
+from hotwire_core.models import Airfoil, JobSettings, Segment4, Toolpath
 
 
 class ToolpathError(ValueError):
@@ -22,7 +22,7 @@ def arc_length(airfoil: Airfoil) -> float:
     )
 
 
-# TODO: leads, alignment, projection, limits, foam placement
+# TODO: alignment, projection, limits, foam placement
 def generate_toolpath(job: JobSettings) -> Toolpath:
     if job.wing is None or job.cut is None:
         raise ToolpathError("fill in the settings brah")
@@ -53,8 +53,21 @@ def generate_toolpath(job: JobSettings) -> Toolpath:
     except ValueError as exc:
         raise ToolpathError(f"cannot apply kerf offset: {exc}") from exc
 
-    #generate the actual moves
-    moves = [
+    first_root, first_tip = root.points[0], tip.points[0]
+    last_root, last_tip = root.points[-1], tip.points[-1]
+    lead_in = []
+    if cut.leadin_mm:
+        lead_in.append(
+            Segment4(
+                xl=first_root.x + cut.leadin_mm,
+                yl=first_root.y,
+                xr=first_tip.x + cut.leadin_mm,
+                yr=first_tip.y,
+                feedrate_mm_min=cut.feedrate_mm_min,
+            )
+        )
+
+    profile = [
         Segment4(
             xl=root_point.x,
             yl=root_point.y,
@@ -65,6 +78,17 @@ def generate_toolpath(job: JobSettings) -> Toolpath:
         )
         for root_point, tip_point in zip(root.points, tip.points)
     ]
-    if cut.direction is CutDirection.BOTTOM_FIRST:
-        moves.reverse()
+    lead_out = []
+    if cut.leadout_mm:
+        lead_out.append(
+            Segment4(
+                xl=last_root.x + cut.leadout_mm,
+                yl=last_root.y,
+                xr=last_tip.x + cut.leadout_mm,
+                yr=last_tip.y,
+                feedrate_mm_min=cut.feedrate_mm_min,
+            )
+        )
+
+    moves = lead_in + profile + lead_out
     return Toolpath(moves=moves)

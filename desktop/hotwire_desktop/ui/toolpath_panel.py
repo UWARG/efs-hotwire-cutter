@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 from PySide6.QtWidgets import (
-    QComboBox,
     QDoubleSpinBox,
     QFormLayout,
     QGroupBox,
@@ -10,7 +9,7 @@ from PySide6.QtWidgets import (
     QWidget,
 )
 
-from hotwire_core.models import CutDirection, CutSettings
+from hotwire_core.models import CutSettings
 
 
 class ToolpathPanel(QWidget):
@@ -43,30 +42,17 @@ class ToolpathPanel(QWidget):
         self._leadout.setValue(10.0)
         self._leadout.setSuffix(" mm")
 
-        self._direction = QComboBox()
-        for direction in CutDirection:
-            self._direction.addItem(direction.value.replace("_", " ").title(), direction)
-
         self._interpolation = QDoubleSpinBox()
         self._interpolation.setRange(0.1, 10.0)
         self._interpolation.setDecimals(2)
         self._interpolation.setValue(1.0)
         self._interpolation.setSuffix(" mm")
 
-        self._tolerance = QDoubleSpinBox()
-        self._tolerance.setRange(0.01, 1.0)
-        self._tolerance.setDecimals(2)
-        self._tolerance.setSingleStep(0.01)
-        self._tolerance.setValue(0.05)
-        self._tolerance.setSuffix(" mm")
-
         form.addRow("Feedrate", self._feedrate)
         form.addRow("Kerf", self._kerf)
         form.addRow("Lead-in", self._leadin)
         form.addRow("Lead-out", self._leadout)
-        form.addRow("Cut direction", self._direction)
         form.addRow("Interpolation", self._interpolation)
-        form.addRow("Segment tolerance", self._tolerance)
         layout.addWidget(box)
 
         self._generate_button = QPushButton("Generate Toolpath")
@@ -79,10 +65,8 @@ class ToolpathPanel(QWidget):
             self._leadin,
             self._leadout,
             self._interpolation,
-            self._tolerance,
         ):
             widget.valueChanged.connect(self._push_settings)
-        self._direction.currentIndexChanged.connect(self._push_settings)
         self._generate_button.clicked.connect(self._on_generate)
 
         self._push_settings()
@@ -94,8 +78,6 @@ class ToolpathPanel(QWidget):
             leadin_mm=self._leadin.value(),
             leadout_mm=self._leadout.value(),
             interpolation_mm=self._interpolation.value(),
-            segment_tolerance_mm=self._tolerance.value(),
-            direction=self._direction.currentData(),
         )
 
     def _push_settings(self) -> None:

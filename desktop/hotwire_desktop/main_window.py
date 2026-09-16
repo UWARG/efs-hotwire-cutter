@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from PySide6.QtCore import Qt
-from PySide6.QtWidgets import QDockWidget, QLabel, QMainWindow, QPushButton, QTabWidget, QToolBar
+from PySide6.QtWidgets import QCheckBox, QDockWidget, QMainWindow, QPushButton, QTabWidget, QToolBar
 
 from hotwire_desktop.services.job_service import JobService
 from hotwire_desktop.services.machine_service import MachineService
@@ -46,12 +46,14 @@ class MainWindow(QMainWindow):
             button.clicked.connect(handler)
             preview_toolbar.addWidget(button)
         preview_toolbar.addSeparator()
-        legend = QLabel(
-            '<span style="color:#29b6f6">● Root</span>&nbsp;&nbsp;'
-            '<span style="color:#66bb6a">● Tip</span>',
-            preview_toolbar,
-        )
-        preview_toolbar.addWidget(legend)
+        root_visibility = QCheckBox("Root", preview_toolbar)
+        root_visibility.setChecked(True)
+        root_visibility.toggled.connect(self.preview_canvas.set_root_visible)
+        preview_toolbar.addWidget(root_visibility)
+        tip_visibility = QCheckBox("Tip", preview_toolbar)
+        tip_visibility.setChecked(True)
+        tip_visibility.toggled.connect(self.preview_canvas.set_tip_visible)
+        preview_toolbar.addWidget(tip_visibility)
         self.addToolBar(Qt.ToolBarArea.TopToolBarArea, preview_toolbar)
 
         # Left dock: setup panels as tabs
