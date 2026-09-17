@@ -25,7 +25,7 @@ def arc_length(airfoil: Airfoil) -> float:
     )
 
 
-# TODO: alignment, projection, limits
+# TODO: alignment, projection
 def generate_toolpath(job: JobSettings) -> Toolpath:
     if job.wing is None or job.cut is None:
         raise ToolpathError("fill in the settings brah")
@@ -104,7 +104,7 @@ def generate_toolpath(job: JobSettings) -> Toolpath:
 
     moves = lead_in + profile + lead_out
     start_root = lead_in[0] if lead_in else profile[0]
-    return Toolpath(
+    toolpath = Toolpath(
         moves=[
             Segment4(
                 xl=move.xl - start_root.xl,
@@ -118,3 +118,10 @@ def generate_toolpath(job: JobSettings) -> Toolpath:
             for move in moves
         ]
     )
+    if job.limits is not None:
+        low, high = toolpath.bounds()
+        if high.x - low.x > job.limits.x_max_mm - job.limits.x_min_mm:
+            raise ToolpathError("toolpath exceeds machine X travel")
+        if high.y - low.y > job.limits.y_max_mm - job.limits.y_min_mm:
+            raise ToolpathError("toolpath exceeds machine Y travel")
+    return toolpath
