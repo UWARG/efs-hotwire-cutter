@@ -9,7 +9,7 @@ public:
     bool done() const;
 
 private:
-    AxisStepCounts direction = {};
+    AxisStepCounts steps = {};
 
     // error terms
     int32_t exl = 0;

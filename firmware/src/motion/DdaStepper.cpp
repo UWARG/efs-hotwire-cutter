@@ -5,13 +5,13 @@ inline uint32_t max(uint32_t a, uint32_t b) {
 }
 
 void DdaStepper::start(const MotionSegment& segment) {
-    direction = segment.steps;
+    steps = segment.steps;
     tickIndex = 0;
-    expectedSteps = max(max(direction.xl, direction.xr), max(direction.yl, direction.yr));
-    exl = 2 * direction.xl - expectedSteps;
-    eyl = 2 * direction.yl - expectedSteps;
-    exr = 2 * direction.xr - expectedSteps;
-    eyr = 2 * direction.yr - expectedSteps;
+    expectedSteps = max(max(steps.xl, steps.xr), max(steps.yl, steps.yr));
+    exl = 2 * steps.xl - expectedSteps;
+    eyl = 2 * steps.yl - expectedSteps;
+    exr = 2 * steps.xr - expectedSteps;
+    eyr = 2 * steps.yr - expectedSteps;
 }
 
 AxisMask DdaStepper::nextTick() {
@@ -19,10 +19,10 @@ AxisMask DdaStepper::nextTick() {
         return {0, 0, 0, 0};
     }
 
-    uint32_t dxl = direction.xl;
-    uint32_t dyl = direction.yl;
-    uint32_t dxr = direction.xr;
-    uint32_t dyr = direction.yr;
+    uint32_t dxl = steps.xl;
+    uint32_t dyl = steps.yl;
+    uint32_t dxr = steps.xr;
+    uint32_t dyr = steps.yr;
 
     AxisMask result = {
         exl > 0,
