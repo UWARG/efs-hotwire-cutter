@@ -56,8 +56,8 @@ void StepEngine::tick() {
     // 2. Call the driver to execute the pulse for those motors
     driver_.pulse(mask);
 
-    // 3. Ask DDA if the segment is finished; if so, stop the engine
+    // 3. Ask DDA if the segment is finished; if so, idle the engine
     if (dda_.done()) {
-        stop();
+        state_ = StepEngineState::Idle;
     }
 }
