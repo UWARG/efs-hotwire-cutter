@@ -15,6 +15,9 @@ class ToolpathError(ValueError):
     """no path"""
 
 
+_VERTICAL_CLEARANCE_MM = 10.0
+
+
 def arc_length(airfoil: Airfoil) -> float:
     return sum(
         math.hypot(end.x - start.x, end.y - start.y)
@@ -22,7 +25,7 @@ def arc_length(airfoil: Airfoil) -> float:
     )
 
 
-# TODO: alignment, projection, limits, foam placement
+# TODO: alignment, projection, limits
 def generate_toolpath(job: JobSettings) -> Toolpath:
     if job.wing is None or job.cut is None:
         raise ToolpathError("fill in the settings brah")
@@ -53,8 +56,17 @@ def generate_toolpath(job: JobSettings) -> Toolpath:
     except ValueError as exc:
         raise ToolpathError(f"cannot apply kerf offset: {exc}") from exc
 
+    if job.foam is not None:
+        xs = [point.x for profile in (root, tip) for point in profile.points]
+        ys = [point.y for profile in (root, tip) for point in profile.points]
+        if max(xs) - min(xs) > job.foam.length_mm:
+            raise ToolpathError("profile does not fit foam length")
+        if max(ys) - min(ys) + 2 * _VERTICAL_CLEARANCE_MM > job.foam.height_mm:
+            raise ToolpathError("profile does not fit foam height with 10 mm clearance")
+        if wing.span_mm > job.foam.width_mm:
+            raise ToolpathError("wing span does not fit foam width")
+
     first_root, first_tip = root.points[0], tip.points[0]
-    last_root, last_tip = root.points[-1], tip.points[-1]
     lead_in = []
     if cut.leadin_mm:
         lead_in.append(
@@ -82,13 +94,27 @@ def generate_toolpath(job: JobSettings) -> Toolpath:
     if cut.leadout_mm:
         lead_out.append(
             Segment4(
-                xl=last_root.x + cut.leadout_mm,
-                yl=last_root.y,
-                xr=last_tip.x + cut.leadout_mm,
-                yr=last_tip.y,
+                xl=first_root.x + cut.leadout_mm,
+                yl=first_root.y,
+                xr=first_tip.x + cut.leadout_mm,
+                yr=first_tip.y,
                 feedrate_mm_min=cut.feedrate_mm_min,
             )
         )
 
     moves = lead_in + profile + lead_out
-    return Toolpath(moves=moves)
+    start_root = lead_in[0] if lead_in else profile[0]
+    return Toolpath(
+        moves=[
+            Segment4(
+                xl=move.xl - start_root.xl,
+                yl=move.yl - start_root.yl,
+                xr=move.xr - start_root.xr,
+                yr=move.yr - start_root.yr,
+                feedrate_mm_min=move.feedrate_mm_min,
+                heat_percent=move.heat_percent,
+                cutting=move.cutting,
+            )
+            for move in moves
+        ]
+    )

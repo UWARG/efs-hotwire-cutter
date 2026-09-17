@@ -72,6 +72,9 @@ class GeometryPanel(QWidget):
         for spin in (self._x_travel, self._y_travel, self._gantry_spacing):
             spin.valueChanged.connect(self._push_limits)
 
+        self._push_foam()
+        self._push_limits()
+
     def _push_wing(self) -> None:
         self._job.update_wing_settings(
             root_chord_mm=self._root_chord.value(),
