@@ -31,10 +31,10 @@ AxisMask DdaStepper::nextTick() {
         eyr > 0
     };
 
-    exl = (exl > 0) ? (2 * (dxl - expectedSteps)) : (2 * dxl);
-    eyl = (eyl > 0) ? (2 * (dyl - expectedSteps)) : (2 * dyl);
-    exr = (exr > 0) ? (2 * (dxr - expectedSteps)) : (2 * dxr);
-    eyr = (eyr > 0) ? (2 * (dyr - expectedSteps)) : (2 * dyr);
+    exl += (exl > 0) ? (2 * (dxl - expectedSteps)) : (2 * dxl);
+    eyl += (eyl > 0) ? (2 * (dyl - expectedSteps)) : (2 * dyl);
+    exr += (exr > 0) ? (2 * (dxr - expectedSteps)) : (2 * dxr);
+    eyr += (eyr > 0) ? (2 * (dyr - expectedSteps)) : (2 * dyr);
 
     tickIndex++;
     
