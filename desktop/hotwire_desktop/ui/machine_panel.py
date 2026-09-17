@@ -33,7 +33,7 @@ class MachinePanel(QWidget):
         self._set_connected(False)
         self._refresh_ports()
 
-    # -- connection -----------------------------------------------------
+    # connection
 
     def _build_connection_box(self) -> QGroupBox:
         box = QGroupBox("Connection")
@@ -66,7 +66,7 @@ class MachinePanel(QWidget):
         elif self._port_combo.currentData() is not None:
             self._serial.connect_port(self._port_combo.currentData())
 
-    # -- jog ---------------------------------------------------------------
+    # jog
 
     def _build_jog_box(self) -> QGroupBox:
         box = QGroupBox("Jog")
@@ -122,7 +122,7 @@ class MachinePanel(QWidget):
         else:
             self._machine.jog(axis, distance, self._jog_feed.value())
 
-    # -- job ---------------------------------------------------------------
+    # job
 
     def _build_job_box(self) -> QGroupBox:
         box = QGroupBox("Job")
@@ -143,7 +143,7 @@ class MachinePanel(QWidget):
         self._estop_button.clicked.connect(self._machine.emergency_stop)
         return box
 
-    # -- state -----------------------------------------------------------
+    # state
 
     def _set_connected(self, connected: bool) -> None:
         self._connect_button.setText("Disconnect" if connected else "Connect")

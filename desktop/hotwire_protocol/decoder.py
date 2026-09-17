@@ -45,9 +45,18 @@ def decode_line(line: str) -> Response:
         return Invalid()
 
     if line.startswith("OK CMD="):
-        name = line[len("OK CMD="):].split()[0] if line[len("OK CMD="):] else ""
+        tokens = line[len("OK CMD="):].split()
+        name = tokens[0] if tokens else ""
         if name:
-            return Ok(command_name=name)
+            buffer_free = None
+            for token in tokens[1:]:
+                key, sep, value = token.partition("=")
+                if key == "BUFFER_FREE" and sep:
+                    try:
+                        buffer_free = int(value)
+                    except ValueError:
+                        return UnknownLine(raw=line)
+            return Ok(command_name=name, buffer_free=buffer_free)
         return UnknownLine(raw=line)
 
     if line.startswith("STATUS "):

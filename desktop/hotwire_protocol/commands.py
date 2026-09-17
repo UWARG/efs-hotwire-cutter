@@ -18,7 +18,7 @@ class MachineState(Enum):
     RUNNING = "RUNNING"
 
 
-# --- Commands (host -> firmware) -------------------------------------------
+# Commands (host -> firmware)
 
 
 @dataclass(frozen=True)
@@ -72,7 +72,7 @@ Command = Union[Hello, StatusRequest, SetZero, Jog, Move4, RunBegin, RunEnd, Sto
 # Not in the firmware yet: PAUSE, RESUME, CUT4, HEAT, CLEAR_FAULT.
 
 
-# --- Responses (firmware -> host) -------------------------------------------
+# Responses (firmware -> host)
 
 
 @dataclass(frozen=True)
@@ -83,6 +83,7 @@ class Ack:
 @dataclass(frozen=True)
 class Ok:
     command_name: str
+    buffer_free: int | None = None
 
 
 @dataclass(frozen=True)
